@@ -1,5 +1,5 @@
 function setAttrValue(attributeCode, attributeValue, attributeText) {
-  debugger
+  debugger;
   var attribute = EdocsApi.getAttributeValue(attributeCode);
   attribute.value = attributeValue;
   attribute.text = attributeText;
@@ -24,19 +24,19 @@ function onSearchNamePosition(request) {
 }
 
 function onChangeDepartment() {
-  debugger
-  if(!EdocsApi.getAttributeValue("Department").text) setAttrValue("NamePosition", "", "");
+  debugger;
+  if (!EdocsApi.getAttributeValue("Department").text) setAttrValue("NamePosition", "", "");
 }
 
-function onBeforeCardSave(){
-   setDateSTR("RegDate", "RegDateText");
+function onBeforeCardSave() {
+  setDateSTR("RegDate", "RegDateText");
   setCommissionMember3();
 }
 
 function setCommissionMember3() {
   var employeeId = EdocsApi.getAttributeValue("Signatory")?.value;
   if (employeeId) {
-      setAttrValue("CommissionMember3", "1");
+    setAttrValue("CommissionMember3", "1");
   } else {
     setAttrValue("CommissionMember3", "0");
   }
@@ -49,10 +49,7 @@ function setDataForESIGN() {
   debugger;
   var regDate = EdocsApi.getAttributeValue("RegDate").value;
   var regNumber = EdocsApi.getAttributeValue("RegNumber").value;
-  var name =
-    "№" +
-    (regNumber ? regNumber : CurrentDocument.id) +
-    (!regDate ? "" : " від " + moment(regDate).format("DD.MM.YYYY"));
+  var name = "№" + (regNumber ? regNumber : CurrentDocument.id) + (!regDate ? "" : " від " + moment(regDate).format("DD.MM.YYYY"));
   doc = {
     docName: name,
     extSysDocId: CurrentDocument.id,
@@ -63,9 +60,7 @@ function setDataForESIGN() {
         taskType: "ToSign",
         taskState: "Done",
         legalEntityCode: EdocsApi.getAttributeValue("OrgEDRPOU").value,
-        contactPersonEmail: EdocsApi.getEmployeeDataByEmployeeID(
-          CurrentDocument.initiatorId
-        ).email,
+        contactPersonEmail: EdocsApi.getEmployeeDataByEmployeeID(CurrentDocument.initiatorId).email,
         signatures: [],
       },
       {
@@ -81,15 +76,30 @@ function setDataForESIGN() {
       attachSignatures: "signatureAndStamp",
     },
   };
+
+  addSignatotyParies(EdocsApi.getAttributeValue("Commissioner6Email").value, doc.parties);
+  addSignatotyParies(EdocsApi.getAttributeValue("Commissioner7Email").value, doc.parties);
+  addSignatotyParies(EdocsApi.getAttributeValue("Commissioner8Email").value, doc.parties);
+
   EdocsApi.setAttributeValue({ code: "LSDJSON", value: JSON.stringify(doc) });
+}
+
+function addSignatotyParies(signatoty, parties) {
+  if (Signatoty) {
+    return parties.push({
+      taskType: "ToSign",
+      taskState: "NotAssigned",
+      legalEntityCode: signatoty,
+      contactPersonEmail: signatoty,
+      expectedSignatures: [],
+    });
+  }
 }
 
 function onTaskExecuteSendOutDoc(routeStage) {
   debugger;
-  if (
-    routeStage.executionResult != "rejected" 
-  ) {
-    if(!EdocsApi.getAttributeValue("SignatoryEmail").value) throw `Не заповнено поле "E-mail Члена комісії 3"`
+  if (routeStage.executionResult != "rejected") {
+    if (!EdocsApi.getAttributeValue("SignatoryEmail").value) throw `Не заповнено поле "E-mail Члена комісії 3"`;
     setDataForESIGN();
 
     var methodData = {
@@ -102,10 +112,8 @@ function onTaskExecuteSendOutDoc(routeStage) {
       data: methodData,
       executeAsync: true,
     };
-    
   }
 }
-
 
 function onTaskCommentedSendOutDoc(caseTaskComment) {
   //debugger;
@@ -114,9 +122,7 @@ function onTaskCommentedSendOutDoc(caseTaskComment) {
   if (!orgCode || !orgShortName) {
     return;
   }
-  var isCaceling =
-    caseTaskComment.comment &&
-    caseTaskComment.comment.toLowerCase().startsWith("#cancel#");
+  var isCaceling = caseTaskComment.comment && caseTaskComment.comment.toLowerCase().startsWith("#cancel#");
   if (isCaceling) {
     caseTaskComment.comment = caseTaskComment.comment.slice(8);
   }
@@ -143,6 +149,5 @@ function setDateSTR(DateCODE, TXTcode) {
   var Date = EdocsApi.getAttributeValue(DateCODE).value;
   var txt = null;
   if (Date) txt = moment(Date).format("DD.MM.YYYY");
-  if (txt != EdocsApi.getAttributeValue(TXTcode).value)
-    EdocsApi.setAttributeValue({ code: TXTcode, value: txt, text: null });
+  if (txt != EdocsApi.getAttributeValue(TXTcode).value) EdocsApi.setAttributeValue({ code: TXTcode, value: txt, text: null });
 }
